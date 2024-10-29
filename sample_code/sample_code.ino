@@ -6,9 +6,9 @@
 enum ModuleID
 {
   //input Rx
-  IN_SW_1801P = ... ,   //... Khai báo cảm biến lên chân digital của Arduino
-  IN_MQ_135 = ... ,     //... Khai báo cảm biến lên chân analog của Arduino
-  IN_PIR = ... ,        //... Khai báo cảm biến lên chân digital của Arduino
+  IN_SW_1801P = 0x01 ,   //... Khai báo cảm biến lên chân digital của Arduino
+  IN_MQ_135 = 0x35 ,     //... Khai báo cảm biến lên chân analog của Arduino
+  IN_PIR = 0x36 ,        //... Khai báo cảm biến lên chân digital của Arduino
   
   //output Tx
   OUT_BUZZER = ... ,    //... khai báo còi vào chân digital trên arduino
