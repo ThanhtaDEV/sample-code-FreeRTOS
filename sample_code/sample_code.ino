@@ -11,9 +11,9 @@ enum ModuleID
   IN_PIR = 0x36 ,        //... Khai báo cảm biến lên chân digital của Arduino
   
   //output Tx
-  OUT_BUZZER = ... ,    //... khai báo còi vào chân digital trên arduino
-  OUT_FAN = ... ,       //... khai báo quạt vào chân digital trên arduino
-  OUT_LED = ...        //... khai báo led vào chân digital trên arduino
+  OUT_BUZZER = 0x37 ,    //... khai báo còi vào chân digital trên arduino
+  OUT_FAN = 0x38 ,       //... khai báo quạt vào chân digital trên arduino
+  OUT_LED = 0x39         //... khai báo led vào chân digital trên arduino
 };
 
 enum ActionPayload 
@@ -38,9 +38,7 @@ struct Message
   ActionPayload payload;
 };
 
-QueueHandle_t RUNG_xQueue;
-QueueHandle_t KHOI_xQueue;
-QueueHandle_t PERSON_xQueue;
+QueueHandle_t Platform_Queue;
 
 void setup() 
 {
@@ -54,9 +52,7 @@ void setup()
   pinMode(OUT_FAN, OUTPUT);
   pinMode(OUT_LED, OUTPUT);
 
-  RUNG_xQueue = xQueueCreate(5, sizeof(Message));
-  KHOI_xQueue = xQueueCreate(5, sizeof(Message));
-  PERSON_xQueue = xQueueCreate(5, sizeof(Message));
+  Platform_Queue = xQueueCreate(5, sizeof(Message));
 
   // Tạo 3 task thực hiện input
   xTaskCreate(task_RUNG, "RUNG", 128, NULL, 1, NULL);
@@ -82,8 +78,8 @@ void task_RUNG(void *pvParameters)
       sw_send.id_Tx = OUT_BUZZER;
       sw_send.id_Rx = IN_SW_1801P;
       sw_send.payload = BUZZER_SW_DISABLE;
-      xQueueSend(RUNG_xQueue, &sw_send, portMAX_DELAY);
-      if(xQueueSend(RUNG_xQueue, &sw_send, portMAX_DELAY) == pdPASS)
+      xQueueSend(Platform_Queue, &sw_send, portMAX_DELAY);
+      if(xQueueSend(Platform_Queue, &sw_send, portMAX_DELAY) == pdPASS)
       {
         // Thực hiện nhiệm vụ của input để đóng gói và gửi đi
       }
@@ -98,7 +94,7 @@ void task_RUNG_output()
   for(;;)
   {
      Message sw_receive = {0};
-    if(xQueueReceive(RUNG_xQueue, &sw_receive, portMAX_DELAY) == pdTRUE)
+    if(xQueueReceive(Platform_Queue, &sw_receive, portMAX_DELAY) == pdTRUE)
     { 
       // nhận được từ input đã gửi ở trên thì thực hiện.....
     }
@@ -118,8 +114,8 @@ void task_KHOI(void *pvParameters)
       mq_send.id_Tx = OUT_FAN;
       mq_send.id_Rx = IN_MQ_135;
       mq_send.payload = FAN_MQ_DISABLE;
-      xQueueSend(KHOI_xQueue, &mq_send, portMAX_DELAY);
-      if(xQueueSend(KHOI_xQueue, &mq_send, portMAX_DELAY) == pdPASS)
+      xQueueSend(Platform_Queue, &mq_send, portMAX_DELAY);
+      if(xQueueSend(Platform_Queue, &mq_send, portMAX_DELAY) == pdPASS)
       {
         // Thực hiện nhiệm vụ của input để đóng gói và gửi đi
       }
@@ -135,7 +131,7 @@ void task_KHOI_output(void *pvParameters)
   for(;;)
   {
     Message mq_receive = {0};
-    if(xQueueReceive(KHOI_xQueue, &mq_receive, portMAX_DELAY) == pdTRUE)
+    if(xQueueReceive(Platform_Queue, &mq_receive, portMAX_DELAY) == pdTRUE)
     { 
       // nhận được từ input đã gửi ở trên thì thực hiện.....
     }
@@ -155,8 +151,8 @@ void task_PERSON(void *pvParameters)
       pir_send.id_Tx = OUT_LED;
       pir_send.id_Rx = IN_PIR;
       pir_send.payload = LED_PIR_DISABLE;
-      xQueueSend(PERSON_xQueue, &pir_send, portMAX_DELAY);
-      if(xQueueSend(PERSON_xQueue, &pir_send, portMAX_DELAY) == pdPASS)
+      xQueueSend(Platform_Queue, &pir_send, portMAX_DELAY);
+      if(xQueueSend(Platform_Queue, &pir_send, portMAX_DELAY) == pdPASS)
       {
         // Thực hiện nhiệm vụ của input để đóng gói và gửi đi
       }
@@ -170,7 +166,7 @@ void task_PERSON_output()
   for(;;)
   {
     Message pir_receive = {0};
-    if(xQueueReceive(PERSON_xQueue, &pir_receive, portMAX_DELAY) == pdTRUE)
+    if(xQueueReceive(Platform_Queue, &pir_receive, portMAX_DELAY) == pdTRUE)
     { 
       // nhận được từ input đã gửi ở trên thì thực hiện.....
     }
