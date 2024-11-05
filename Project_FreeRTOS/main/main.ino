@@ -16,6 +16,8 @@ QueueHandle_t Platform_Queue;
 
 void setup() 
 {
+  Serial.println("tôi có chỉnh sửa thêm dòng này");
+  Serial.println("dòng này nữa");
   //setup đầu vào
   pinMode(IN_SW_1801P, INPUT);
   pinMode(IN_MQ_135, INPUT);
