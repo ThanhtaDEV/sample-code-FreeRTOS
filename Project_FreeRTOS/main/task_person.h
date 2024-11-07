@@ -12,8 +12,8 @@ void task_PERSON(void *pvParameters)
       pir_send.id_Tx = OUT_LED;
       pir_send.id_Rx = IN_PIR;
       pir_send.payload = LED_PIR_DISABLE;
-      xQueueSend(Platform_Queue, &pir_send, portMAX_DELAY);
-      if(xQueueSend(Platform_Queue, &pir_send, portMAX_DELAY) == pdPASS)
+      xQueueSend(Person_Queue, &pir_send, portMAX_DELAY);
+      if(xQueueSend(Person_Queue, &pir_send, portMAX_DELAY) == pdPASS)
       {
         // Thực hiện nhiệm vụ của input để đóng gói và gửi đi
       }
