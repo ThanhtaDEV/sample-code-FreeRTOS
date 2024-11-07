@@ -12,7 +12,6 @@ void task_KHOI(void *pvParameters)
       mq_send.id_Tx = IN_MQ_135;
       mq_send.id_Rx = OUT_FAN;
       mq_send.payload = FAN_MQ_DISABLE;
-      xQueueSend(Khoi_Queue, &mq_send, portMAX_DELAY);
       if(xQueueSend(Khoi_Queue, &mq_send, portMAX_DELAY) == pdPASS)
       {
         // Thực hiện nhiệm vụ của input để đóng gói và gửi đi
