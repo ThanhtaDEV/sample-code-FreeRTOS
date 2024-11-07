@@ -9,11 +9,10 @@ void task_RUNG(void *pvParameters)
   for(;;)
   {
    Message sw_send = {0};
-      sw_send.id_Tx = OUT_BUZZER;
-      sw_send.id_Rx = IN_SW_1801P;
+      sw_send.id_Tx = IN_SW_1801P;
+      sw_send.id_Rx = OUT_BUZZER;
       sw_send.payload = BUZZER_SW_DISABLE;
-      xQueueSend(Platform_Queue, &sw_send, portMAX_DELAY);
-      if(xQueueSend(Platform_Queue, &sw_send, portMAX_DELAY) == pdPASS)
+      if(xQueueSend(Rung_Queue, &sw_send, portMAX_DELAY) == pdPASS)
       {
         // Thực hiện nhiệm vụ của input để đóng gói và gửi đi
       }
