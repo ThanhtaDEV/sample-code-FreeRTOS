@@ -18,17 +18,18 @@ void task_RUNG(void *pvParameters)
       sw_send.id_Tx = IN_SW_1801P;
       sw_send.id_Rx = OUT_BUZZER;
       sw_send.payload = BUZZER_SW_DISABLE;
-      if(xQueueSend(Platform_Queue, &sw_send, portMAX_DELAY) == pdPASS)
+      if(xQueueSend(Rung_Queue, &sw_send, portMAX_DELAY) == pdPASS)
       {
         // Thực hiện nhiệm vụ của input để đóng gói và gửi đi
         if(abs(rung_currentvalue-rung_lastValue)>=rung_noiseThreshold)
-        {
+        { 
           rung_count++;
           // ngưỡng báo động
           if(rung_currentvalue>=80 && rung_count>=3 )// ngưỡng giá trị báo động 
           {
             sw_send.payload = BUZZER_SW_ENABLE;
             Serial.print("Buzzer on");
+            Serial.println("Warning");
             rung_lastValue=rung_currentvalue;
             rung_count=0;
           }
