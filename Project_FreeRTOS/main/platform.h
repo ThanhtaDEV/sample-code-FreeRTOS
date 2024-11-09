@@ -39,6 +39,7 @@ struct Message
   ActionPayload payload;
 };
 
-extern QueueHandle_t Platform_Queue;  // Khai báo queue để sử dụng trong các file khác
-
+extern QueueHandle_t Rung_Queue;  // Khai báo queue để sử dụng trong các file khác
+extern QueueHandle_t Khoi_Queue;
+extern QueueHandle_t Person_Queue;
 #endif  

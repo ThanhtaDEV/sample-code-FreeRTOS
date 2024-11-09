@@ -12,7 +12,9 @@
 #include "task_person.h"
 #include "task_person_output.h"
 
-QueueHandle_t Platform_Queue;
+QueueHandle_t Rung_Queue;
+QueueHandle_t Khoi_Queue;
+QueueHandle_t Person_Queue;
 
 void setup() 
 {
@@ -26,7 +28,9 @@ void setup()
   pinMode(OUT_FAN, OUTPUT);
   pinMode(OUT_LED, OUTPUT);
 
-  Platform_Queue = xQueueCreate(5, sizeof(Message));
+  Rung_Queue = xQueueCreate(5, sizeof(Message));
+  Khoi_Queue = xQueueCreate(5, sizeof(Message));
+  Person_Queue = xQueueCreate(5, sizeof(Message));
 
   // Tạo 3 task thực hiện input
   xTaskCreate(task_RUNG, "RUNG", 128, NULL, 1, NULL);
