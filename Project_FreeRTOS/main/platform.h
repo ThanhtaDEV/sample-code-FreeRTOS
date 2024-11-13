@@ -21,15 +21,18 @@ enum ActionPayload
 { 
   //Buzzer output
   BUZZER_SW_DISABLE,
-  BUZZER_SW_ENABLE,
+  BUZZER_SW_ENABLE_MEDIUM,
+  BUZZER_SW_ENABLE_HIGH,
 
   //Fan output
   FAN_MQ_DISABLE,
-  FAN_MQ_ENABLE,
+  FAN_MQ_ENABLE_MEDIUM,
+  FAN_MQ_ENABLE_HIGH,
   
   //Led output
   LED_PIR_DISABLE,
-  LED_PIR_ENABLE
+  LED_PIR_ENABLE_MEDIUM,
+  LED_PIR_ENABLE_HIGH
 };
 
 struct Message 
