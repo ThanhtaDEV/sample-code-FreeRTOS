@@ -56,7 +56,6 @@ void task_RUNG(void *pvParameters)
       {
         //Còn không nhận được thì.... ví dụ pir hư thì đóng gói gửi đi
       }
-      // kiểm tra cảm biến
   }
 }  
 #endif
