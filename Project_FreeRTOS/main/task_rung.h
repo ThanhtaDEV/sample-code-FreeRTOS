@@ -27,12 +27,12 @@ void task_RUNG(void *pvParameters)
       // kiểm tra cảm biến
         if(rung_currentvalue==HIGH)
         {
-          serial.println("pin is disconnected");
+          Serial.println("pin is disconnected");
           sw_send.payload=SENSOR_DISCONNECTED;          
         }
         else
         {
-          serial.println("pin is connected");
+          Serial.println("pin is connected");
           sw_send.payload=SENSOR_CONNECTED;   
         }
         digitalWrite(testPin, LOW);
@@ -44,7 +44,7 @@ void task_RUNG(void *pvParameters)
         }
         else
         {        
-          serial.println("pin is connected");
+          Serial.println("pin is connected");
           sw_send.payload=SENSOR_CONNECTED;   
         }
       pinMode(testPin, INPUT);
