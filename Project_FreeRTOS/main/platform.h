@@ -4,6 +4,8 @@
 #include <Arduino_FreeRTOS.h>
 #include <queue.h>
 
+#define IN_SW_1801P_pin A0
+#define buzzer_pin A1
 enum ModuleID
 {
   //input Rx
