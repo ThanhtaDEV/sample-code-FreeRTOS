@@ -18,13 +18,15 @@ QueueHandle_t Person_Queue;
 
 void setup() 
 {
+  Serial.begin(9600);
   //setup đầu vào
-  pinMode(IN_SW_1801P, INPUT);
+  pinMode(IN_SW_1801P_pin, INPUT);
   pinMode(IN_MQ_135, INPUT);
   pinMode(IN_PIR, INPUT);
 
   //setup đầu ra
-  pinMode(OUT_BUZZER, OUTPUT);
+  noTone(buzzer_pin);
+
   pinMode(OUT_FAN, OUTPUT);
   pinMode(OUT_LED, OUTPUT);
 
@@ -47,17 +49,4 @@ void loop()
 {
   // Không dùng loop khi chạy FreeRTOS
 }
-
-
-
-
-
-
-
-
-/// hà ghi chú.
-
-
-
-
 
