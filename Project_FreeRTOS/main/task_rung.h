@@ -4,7 +4,7 @@
 
 #include "platform.h" // Chứa định nghĩa ModuleID, ActionPayload, Message, QueueHandle_t
 
-int time_interval = 3000;
+int time_interval = 2000;
 int threshold_low = 5;
 int threshold_medium = 10;
 int count = 0;
@@ -23,19 +23,20 @@ void task_RUNG(void *pvParameters)
         count++;
         Serial.print("Count Value: ");
         Serial.println(count);
-         //tránh đếm trùng tín hiệu
       }
       if(count > threshold_medium + 5)
       {
+        Serial.print("Vượt quá ngưỡng test: ");
+        Serial.println(count);
         break;
       }
-      delay(20);
+      vTaskDelay(20/portTICK_PERIOD_MS);
     }
     // thông điệm gửi đi theo ngưỡng tần suất
     if (count <= threshold_low) // count <= 5
     { 
       sendMessage(IN_SW_1801P, OUT_BUZZER, BUZZER_SW_DISABLE, Rung_Queue);
-      Serial.println("DISABLE WARNING lEVEL: ");
+      Serial.println("DISABLE WARNING lEVEL");
       Serial.println(count);
     }
 
@@ -46,16 +47,22 @@ void task_RUNG(void *pvParameters)
       Serial.println(count);
     }
 
-    else
+    else if (count > threshold_medium && count <= threshold_medium + 5) // 10<...<15
     {
       sendMessage(IN_SW_1801P, OUT_BUZZER, BUZZER_SW_ENABLE_HIGH, Rung_Queue);
       Serial.print("HIGH WARNING LEVEL: ");
       Serial.println(count);
     }
+    else
+    {
+      Serial.println("Count exceeds maximum threshold! Resetting...");
+      count = 0; // Hoặc giảm count về một giá trị hợp lý
+    }
     if( count > 0)
     {
       count--;
     }
+    vTaskDelay(100 / portTICK_PERIOD_MS);  // Nhường CPU trong 100ms
   }
 }  
 
