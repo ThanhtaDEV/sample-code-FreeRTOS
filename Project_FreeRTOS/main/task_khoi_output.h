@@ -1,61 +1,80 @@
-// khoi_Task.h
 #ifndef TASK_KHOI_OUTPUT_H
 #define TASK_KHOI_OUTPUT_H
 
-#include "platform.h" 
-
-void task_KHOI_output(void *pvParameters)
+#include "platform.h"
+#define FAN_PIN 3
+#define ERROR_LED_PIN 13  // Đèn LED báo lỗi nếu cần
+pinMode(3, OUTPUT);
+pinMode(13, OUTPUT);
+// Hàm bật quạt với công suất 100%
+void turnOnFan100() 
 {
-  int flag_pri = 0;
-  int pre_flag_pri = 0;
-  for(;;)
+  analogWrite(FAN_PIN, 255);
+}
+
+// Hàm bật quạt với công suất 50%
+void turnOnFan50() 
+{
+  analogWrite(FAN_PIN, 128); 
+}
+
+// Hàm tắt quạt
+void turnOffFan() 
+{
+  analogWrite(FAN_PIN, 0); // Tắt quạt hoàn toàn
+}
+
+// Hàm kiểm tra kết nối quạt
+bool isFanConnected() 
+{
+  // Kiểm tra kết nối - giả sử nếu tín hiệu là LOW thì quạt mất kết nối
+  return digitalRead(FAN_PIN) != LOW; 
+}
+
+void task_KHOI_output() 
+{
+  for (;;) 
   {
     Message mq_receive = {0};
-    if(xQueueReceive(Khoi_Queue, &mq_receive, portMAX_DELAY) == pdTRUE)
-    { 
-      if(mq_receive.id_Rx == OUT_FAN)
+    if (xQueueReceive(Khoi_Queue, &mq_receive, portMAX_DELAY) == pdTRUE) 
+    {
+      if (mq_receive.id_Rx == OUT_FAN) 
       {
-        if(mq_receive.id_Tx == IN_MQ_135)
-        flag_pri = 1;
+        if (mq_receive.id_Tx == IN_MQ_135)
         {
-          if(pre_flag_pri < flag_pri)
+          // Kiểm tra kết nối trước khi điều khiển quạt
+          if (isFanConnected())
           {
-            pre_flag_pri = flag_pri;
-            switch (mq_receive.payload)
+            if (mq_receive.payload == FAN_MQ_ENABLE_LEVEL1)
             {
-              case FAN_MQ_DISABLE:
-              //call function turn off fan
-                break;
-              default:
-                //code
+              Serial.println("Fan turned ON 50%");
+              turnOnFan50();
             }
-            if(FAN_MQ_DISABLE == mq_receive.payload)
+            else if (mq_receive.payload == FAN_MQ_ENABLE_LEVEL2) 
             {
-              //call function turn off fan
+              Serial.println("Fan turned ON 100%");
+              turnOnFan100();
             }
+            else if (mq_receive.payload == FAN_MQ_DISABLE) 
+            {
+              Serial.println("Fan turned off");
+              turnOffFan();
+            }
+          }
+          else 
+          {
+            Serial.println("Fan connection lost");
+            digitalWrite(ERROR_LED_PIN, HIGH); // Bật LED báo lỗi
+            turnOffFan(); // Tắt quạt để đảm bảo an toàn
           }
         }
-        if(mq_receive.id_Tx == IN_PIR)
-        {
-          switch (mq_receive.payload)
-          {
-            case FAN_MQ_DISABLE:
-              //call function turn off fan
-              break;
-
-            default:
-          }
-          if(FAN_MQ_DISABLE == mq_receive.payload)
-          {
-            //call function turn off fan
-          }
       }
-    }
-    else
+    } else
     {
-      //còn không thì thực hiện......
+
     }
-    vTaskDelay(500/ portTICK_PERIOD_MS);
+    vTaskDelay(500 / portTICK_PERIOD_MS);
   }  
 }
+
 #endif
