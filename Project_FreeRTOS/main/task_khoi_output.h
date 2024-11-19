@@ -1,80 +1,97 @@
+// khoi_Task.h
 #ifndef TASK_KHOI_OUTPUT_H
 #define TASK_KHOI_OUTPUT_H
 
-#include "platform.h"
-#define FAN_PIN 3
-#define ERROR_LED_PIN 13  // Đèn LED báo lỗi nếu cần
-pinMode(3, OUTPUT);
-pinMode(13, OUTPUT);
-// Hàm bật quạt với công suất 100%
-void turnOnFan100() 
+#include "platform.h" 
+enum FanStatus
 {
-  analogWrite(FAN_PIN, 255);
-}
+  FAN_MQ_DISABLE_STS,
+  FAN_MQ_LOW_STS,
+  FAN_MQ_HIGH_STS,
+  FAN_MQ_UNKNOWN_STS
+};
 
-// Hàm bật quạt với công suất 50%
-void turnOnFan50() 
+void FanAlertLow()
 {
-  analogWrite(FAN_PIN, 128); 
-}
-
-// Hàm tắt quạt
-void turnOffFan() 
-{
-  analogWrite(FAN_PIN, 0); // Tắt quạt hoàn toàn
-}
-
-// Hàm kiểm tra kết nối quạt
-bool isFanConnected() 
-{
-  // Kiểm tra kết nối - giả sử nếu tín hiệu là LOW thì quạt mất kết nối
-  return digitalRead(FAN_PIN) != LOW; 
-}
-
-void task_KHOI_output() 
-{
-  for (;;) 
+  Serial.println("Fan: Medium alert!");
+  for (int i = 0; i < 2; i++) // Rung 2 lần
   {
+    digitalWrite(Fan_pin, 200); // Tín hiệu PWM (50% duty cycle)
+    delay(200);                  // Quay trong 200ms
+    analogWrite(Fan_pin, 0);  // Tắt tín hiệu
+    delay(800);                  // Nghỉ 800ms
+  }
+}
+
+// Hàm điều khiển buzzer mức cảnh báo cao
+void FanAlertHigh()
+{
+  Serial.println("Fan: High alert!");
+  for (int i = 0; i < 8; i++) // Quay 8 lần
+  {
+    analogWrite(Fan_pin, 200); // Tín hiệu PWM (100% duty cycle)
+    delay(200);                  // Quay trong 200ms
+    digitalWrite(Fan_pin, 0);  // Tắt tín hiệu
+    delay(100);                  // Nghỉ 100ms
+  }
+}
+
+void task_KHOI_output()
+{ 
+ FanStatus Fan_sts = FAN_MQ_UNKNOWN_STS;
+  for(;;)
+  {
+   
     Message mq_receive = {0};
-    if (xQueueReceive(Khoi_Queue, &mq_receive, portMAX_DELAY) == pdTRUE) 
-    {
-      if (mq_receive.id_Rx == OUT_FAN) 
+    if(xQueueReceive(Khoi_Queue, &mq_receive, portMAX_DELAY) == pdTRUE)
+    { 
+      if(mq_receive.id_Rx == OUT_FAN)
       {
-        if (mq_receive.id_Tx == IN_MQ_135)
+        if(mq_receive.id_Tx == IN_MQ_135)
         {
-          // Kiểm tra kết nối trước khi điều khiển quạt
-          if (isFanConnected())
+          switch(mq_receive.payload)
           {
-            if (mq_receive.payload == FAN_MQ_ENABLE_LEVEL1)
-            {
-              Serial.println("Fan turned ON 50%");
-              turnOnFan50();
-            }
-            else if (mq_receive.payload == FAN_MQ_ENABLE_LEVEL2) 
-            {
-              Serial.println("Fan turned ON 100%");
-              turnOnFan100();
-            }
-            else if (mq_receive.payload == FAN_MQ_DISABLE) 
-            {
-              Serial.println("Fan turned off");
-              turnOffFan();
-            }
-          }
-          else 
-          {
-            Serial.println("Fan connection lost");
-            digitalWrite(ERROR_LED_PIN, HIGH); // Bật LED báo lỗi
-            turnOffFan(); // Tắt quạt để đảm bảo an toàn
+            case  FAN_MQ_DISABLE:
+              if(Fan_sts != FAN_MQ_DISABLE_STS)
+              {
+                Serial.println("Fan: Disabled");
+                digitalWrite(Fan_pin, 0); // Đảm bảo buzzer tắt
+                Fan_sts = FAN_MQ_DISABLE_STS;
+              }
+              break;
+
+            case FAN_MQ_ENABLE_MEDIUM:
+              // if(buzzer_sts != BUZZER_LOW_STS)
+              // {
+                Serial.println("Fan: MEDIUM");
+                FanAlertLow(); // Gọi hàm cảnh báo mức thấp
+                Fan_sts = FAN_MQ_LOW_STS;
+              // }
+              break;
+
+            case FAN_MQ_ENABLE_HIGH:
+              // if(buzzer_sts != BUZZER_HIGH_STS)
+              // {
+                Serial.println("Fan: HIGH");
+                FanAlertHigh(); // Gọi hàm cảnh báo mức cao
+                Fan_sts = FAN_MQ_HIGH_STS;
+              // }
+              break;
+
+            default:
+              Serial.println("Unknown Fan state");
+              digitalWrite(Fan_pin, 0); // Tắt fan khi trạng thái không xác định
+              Fan_sts = FAN_MQ_UNKNOWN_STS;
+              break;
           }
         }
       }
-    } else
-    {
-
     }
-    vTaskDelay(500 / portTICK_PERIOD_MS);
-  }  
+    else
+    {
+      // Thực hiện hành động khác nếu không có message trong hàng đợi
+    }
+  }   
 }
 
 #endif
