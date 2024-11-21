@@ -12,39 +12,46 @@ enum BuzzerStatus
   BUZZER_UNKNOWN_STS
 };
 
+// Handle cho task con
+TaskHandle_t buzzerTaskHandle = NULL;
+
 // Hàm điều khiển buzzer mức cảnh báo thấp
-void buzzerAlertLow()
+void buzzerAlertLow(void *pvParameters)
 {
-  Serial.println("Buzzer: Low alert!");
-  for (int i = 0; i < 2; i++) // Rung 2 lần
+  Serial.println("Buzzer Low Alert Task Started.");
+  for(;;)
   {
+    // Thực hiện cảnh báo mức thấp
     analogWrite(buzzer_pin, 200); // Tín hiệu PWM (50% duty cycle)
-    delay(200);                  // Rung trong 200ms
+    vTaskDelay(200 / portTICK_PERIOD_MS);  // báo trong 200ms
     analogWrite(buzzer_pin, 0);  // Tắt tín hiệu
-    delay(800);                  // Nghỉ 800ms
+    vTaskDelay(20 / portTICK_PERIOD_MS);  // Nghỉ 20ms
   }
 }
 
 // Hàm điều khiển buzzer mức cảnh báo cao
-void buzzerAlertHigh()
+void buzzerAlertHigh(void *pvParameters)
 {
-  Serial.println("Buzzer: High alert!");
-  for (int i = 0; i < 8; i++) // Rung 8 lần
+  Serial.println("Buzzer High Alert Task Started.");
+  for(;;)
   {
-    analogWrite(buzzer_pin, 200); // Tín hiệu PWM (100% duty cycle)
-    delay(200);                  // Rung trong 200ms
+  
+    analogWrite(buzzer_pin, 250); // Tín hiệu PWM (100% duty cycle)
+    vTaskDelay(100 / portTICK_PERIOD_MS);  // báo trong 100ms
     analogWrite(buzzer_pin, 0);  // Tắt tín hiệu
-    delay(100);                  // Nghỉ 100ms
+    vTaskDelay(50 / portTICK_PERIOD_MS); // Nghỉ 50ms
   }
 }
 
-void task_RUNG_output()
+void task_RUNG_output(void *pvParameters)
 { 
   BuzzerStatus buzzer_sts = BUZZER_UNKNOWN_STS;
+
   for(;;)
   {
-    delay(100);
+    vTaskDelay(100/portTICK_PERIOD_MS);
     Message sw_receive = {0};
+
     if(xQueueReceive(Rung_Queue, &sw_receive, portMAX_DELAY) == pdTRUE)
     { 
       if(sw_receive.id_Rx == OUT_BUZZER)
@@ -59,25 +66,56 @@ void task_RUNG_output()
                 Serial.println("Buzzer: Disabled");
                 analogWrite(buzzer_pin, 0); // Đảm bảo buzzer tắt
                 buzzer_sts = BUZZER_DISABLE_STS;
+                if(buzzerTaskHandle != NULL)
+                {
+                  vTaskDelete(buzzerTaskHandle); // Xóa task con nếu đang chạy
+                  buzzerTaskHandle = NULL;
+                }
               }
               break;
 
             case BUZZER_SW_ENABLE_LOW:
-              // if(buzzer_sts != BUZZER_LOW_STS)
-              // {
-                Serial.println("Buzzer: LOW");
-                buzzerAlertLow(); // Gọi hàm cảnh báo mức thấp
-                buzzer_sts = BUZZER_LOW_STS;
-              // }
+              if(buzzer_sts != BUZZER_LOW_STS)
+              {
+                if (buzzerTaskHandle != NULL) 
+                {
+                vTaskDelete(buzzerTaskHandle); // Xóa task con nếu đang chạy
+                buzzerTaskHandle = NULL;
+                }
+
+                Serial.println("Creating Buzzer Low Task...");
+                if (xTaskCreate(buzzerAlertLow, "BuzzerLowTask", 256, NULL, 4, &buzzerTaskHandle) == pdPASS)
+                {
+                  Serial.println("Buzzer Low Task Created Successfully.");
+                  buzzer_sts = BUZZER_LOW_STS;
+                }
+                else
+                {
+                  Serial.println("Failed to Create Buzzer Low Task.");
+                }
+              }
               break;
 
             case BUZZER_SW_ENABLE_HIGH:
-              // if(buzzer_sts != BUZZER_HIGH_STS)
-              // {
-                Serial.println("Buzzer: HIGH");
-                buzzerAlertHigh(); // Gọi hàm cảnh báo mức cao
-                buzzer_sts = BUZZER_HIGH_STS;
-              // }
+              if(buzzer_sts != BUZZER_HIGH_STS)
+              {
+                if(buzzerTaskHandle != NULL)
+                {
+                  vTaskDelete(buzzerTaskHandle); // Xóa task con nếu đang chạy
+                  buzzerTaskHandle = NULL;
+                }
+
+                Serial.println("Creating Buzzer High Task...");
+                if (xTaskCreate(buzzerAlertHigh, "BuzzerHighTask", 256, NULL, 4, &buzzerTaskHandle) == pdPASS)
+                {
+                  Serial.println("Buzzer High Task Created Successfully.");
+                  buzzer_sts = BUZZER_HIGH_STS;
+                }
+                else
+                {
+                  Serial.println("Failed to Create Buzzer High Task.");
+                }
+              }
               break;
 
             default:

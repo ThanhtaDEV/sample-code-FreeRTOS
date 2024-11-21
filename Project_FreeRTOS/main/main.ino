@@ -25,7 +25,7 @@ void setup()
   pinMode(IN_PIR, INPUT);
 
   //setup đầu ra
-  noTone(buzzer_pin);
+  analogWrite(buzzer_pin, 0); // Tắt buzzer ban đầu
 
   pinMode(OUT_FAN, OUTPUT);
   pinMode(OUT_LED, OUTPUT);
