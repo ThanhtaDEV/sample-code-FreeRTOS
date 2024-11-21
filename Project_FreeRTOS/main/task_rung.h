@@ -53,11 +53,11 @@ void task_RUNG(void *pvParameters)
       Serial.print("HIGH WARNING LEVEL: ");
       Serial.println(count);
     }
-    else
-    {
-      Serial.println("Count exceeds maximum threshold! Resetting...");
-      count = 0; // Hoặc giảm count về một giá trị hợp lý
-    }
+    // else
+    // {
+    //   Serial.println("Count exceeds maximum threshold! Resetting...");
+    //   count = 0; // Hoặc giảm count về một giá trị hợp lý
+    // }
     if( count > 0)
     {
       count--;
