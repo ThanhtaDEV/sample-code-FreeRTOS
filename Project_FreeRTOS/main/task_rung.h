@@ -4,7 +4,7 @@
 
 #include "platform.h" // Chứa định nghĩa ModuleID, ActionPayload, Message, QueueHandle_t
 
-int time_interval = 2000;
+int time_interval = 3000;
 int threshold_low = 5;
 int threshold_medium = 10;
 int count = 0;

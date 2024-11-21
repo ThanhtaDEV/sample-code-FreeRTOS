@@ -12,38 +12,35 @@ enum BuzzerStatus
   BUZZER_UNKNOWN_STS
 };
 
+// Handle cho task con
+TaskHandle_t buzzerTaskHandle = NULL;
+
 // Hàm điều khiển buzzer mức cảnh báo thấp
 void buzzerAlertLow(void *pvParameters)
 {
   Serial.println("Buzzer Low Alert Task Started.");
-  // Thực hiện cảnh báo mức thấp
-  for (int i = 0; i < 4; i++) // báo 4 lần
+  for(;;)
   {
+    // Thực hiện cảnh báo mức thấp
     analogWrite(buzzer_pin, 200); // Tín hiệu PWM (50% duty cycle)
     vTaskDelay(200 / portTICK_PERIOD_MS);  // báo trong 200ms
     analogWrite(buzzer_pin, 0);  // Tắt tín hiệu
     vTaskDelay(20 / portTICK_PERIOD_MS);  // Nghỉ 20ms
   }
-  Serial.println("Buzzer Low Alert Task Completed.");
-  // Kết thúc sau khi hoàn thành
-  vTaskDelete(NULL);
 }
 
 // Hàm điều khiển buzzer mức cảnh báo cao
 void buzzerAlertHigh(void *pvParameters)
 {
   Serial.println("Buzzer High Alert Task Started.");
-  // Thực hiện cảnh báo mức cao
-  for (int i = 0; i < 8; i++) // báo 8 lần
+  for(;;)
   {
+  
     analogWrite(buzzer_pin, 250); // Tín hiệu PWM (100% duty cycle)
     vTaskDelay(100 / portTICK_PERIOD_MS);  // báo trong 100ms
     analogWrite(buzzer_pin, 0);  // Tắt tín hiệu
     vTaskDelay(50 / portTICK_PERIOD_MS); // Nghỉ 50ms
   }
-  Serial.println("Buzzer High Alert Task Completed.");
-  // Kết thúc sau khi hoàn thành
-  vTaskDelete(NULL);
 }
 
 void task_RUNG_output(void *pvParameters)
@@ -54,6 +51,7 @@ void task_RUNG_output(void *pvParameters)
   {
     vTaskDelay(100/portTICK_PERIOD_MS);
     Message sw_receive = {0};
+
     if(xQueueReceive(Rung_Queue, &sw_receive, portMAX_DELAY) == pdTRUE)
     { 
       if(sw_receive.id_Rx == OUT_BUZZER)
@@ -68,14 +66,25 @@ void task_RUNG_output(void *pvParameters)
                 Serial.println("Buzzer: Disabled");
                 analogWrite(buzzer_pin, 0); // Đảm bảo buzzer tắt
                 buzzer_sts = BUZZER_DISABLE_STS;
+                if(buzzerTaskHandle != NULL)
+                {
+                  vTaskDelete(buzzerTaskHandle); // Xóa task con nếu đang chạy
+                  buzzerTaskHandle = NULL;
+                }
               }
               break;
 
             case BUZZER_SW_ENABLE_LOW:
               if(buzzer_sts != BUZZER_LOW_STS)
               {
+                if (buzzerTaskHandle != NULL) 
+                {
+                vTaskDelete(buzzerTaskHandle); // Xóa task con nếu đang chạy
+                buzzerTaskHandle = NULL;
+                }
+
                 Serial.println("Creating Buzzer Low Task...");
-                if (xTaskCreate(buzzerAlertLow, "BuzzerLowTask", 128, NULL, 1, NULL) == pdPASS)
+                if (xTaskCreate(buzzerAlertLow, "BuzzerLowTask", 256, NULL, 4, &buzzerTaskHandle) == pdPASS)
                 {
                   Serial.println("Buzzer Low Task Created Successfully.");
                   buzzer_sts = BUZZER_LOW_STS;
@@ -90,8 +99,14 @@ void task_RUNG_output(void *pvParameters)
             case BUZZER_SW_ENABLE_HIGH:
               if(buzzer_sts != BUZZER_HIGH_STS)
               {
+                if(buzzerTaskHandle != NULL)
+                {
+                  vTaskDelete(buzzerTaskHandle); // Xóa task con nếu đang chạy
+                  buzzerTaskHandle = NULL;
+                }
+
                 Serial.println("Creating Buzzer High Task...");
-                if (xTaskCreate(buzzerAlertHigh, "BuzzerHighTask", 128, NULL, 2, NULL) == pdPASS)
+                if (xTaskCreate(buzzerAlertHigh, "BuzzerHighTask", 256, NULL, 4, &buzzerTaskHandle) == pdPASS)
                 {
                   Serial.println("Buzzer High Task Created Successfully.");
                   buzzer_sts = BUZZER_HIGH_STS;
@@ -120,8 +135,3 @@ void task_RUNG_output(void *pvParameters)
 }
 
 #endif
-
-
-
-
-
