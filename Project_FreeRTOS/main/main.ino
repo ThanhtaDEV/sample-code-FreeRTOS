@@ -39,15 +39,13 @@ void setup()
   
   // Tạo 3 task thực hiện input
   xTaskCreate(task_RUNG, "RUNG", 1024, NULL, 1, NULL);
-  // //xTaskCreate(task_KHOI, "KHOI", 128, NULL, 1, NULL);
-  xTaskCreate(task_PERSON, "PERSON", 1024, NULL, 2, NULL);
+  // //xTaskCreate(task_KHOI, "KHOI", 128, NULL, 2, NULL);
+  xTaskCreate(task_PERSON, "PERSON", 1024, NULL, 3, NULL);
 
   // //3 task thực hiện output
-  xTaskCreate(task_RUNG_output, "RUNG", 1024, NULL, 3, NULL);
-  xTaskCreate(buzzerTask, "BuzzerTask", 1024, NULL, 4, NULL); //task con của output rung
-
-  // //xTaskCreate(task_KHOI_output, "KHOI", 128, NULL, 2, NULL);
-  xTaskCreate(task_PERSON_output, "PERSON", 1024, NULL, 4, NULL);
+  xTaskCreate(task_RUNG_output, "RUNG", 1024, NULL, 4, NULL);
+  // //xTaskCreate(task_KHOI_output, "KHOI", 128, NULL, 6, NULL);
+  xTaskCreate(task_PERSON_output, "PERSON", 1024, NULL, 8, NULL);
 
 
 }

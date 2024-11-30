@@ -30,7 +30,7 @@ void task_PERSON(void *pvParameters)
         {
           break;
         }
-        vTaskDelay(100 / portTICK_PERIOD_MS);
+        vTaskDelay(20/ portTICK_PERIOD_MS);
       }
       
     }

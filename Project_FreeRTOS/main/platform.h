@@ -5,10 +5,10 @@
 // #include <queue.h>
 
 #define IN_SW_1801P_pin 2
-#define buzzer_pin 3
+#define buzzer_pin 5
 
 #define IN_PIR_pin 4
-#define Led_pin 5
+#define Led_pin 17
 
 enum ModuleID
 {

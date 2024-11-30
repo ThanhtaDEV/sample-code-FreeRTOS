@@ -29,7 +29,7 @@ void task_RUNG(void *pvParameters)
         Serial.println(count);
         break;
       }
-      vTaskDelay(100/portTICK_PERIOD_MS);
+      vTaskDelay(20/portTICK_PERIOD_MS);
     }
     // thông điệm gửi đi theo ngưỡng tần suất
     if (count <= threshold_low) // count <= 5
