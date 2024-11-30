@@ -8,14 +8,13 @@ int time_interval = 3000;
 int threshold_low = 5;
 int threshold_medium = 10;
 int count = 0;
-void sendMessage(int id_Tx, int id_Rx, int payload, QueueHandle_t queue);
+void sendMessage(ModuleID id_Tx, ModuleID id_Rx, ActionPayload payload, QueueHandle_t queue);
 
 void task_RUNG(void *pvParameters)
 {
   for(;;)
   {
     unsigned long start_time = millis(); //Thời điểm bắt đầu đo
-    bool signal_detect = false;
     while (millis() - start_time < time_interval )
     { 
       if(analogRead(IN_SW_1801P_pin) < 1000 )
@@ -23,19 +22,20 @@ void task_RUNG(void *pvParameters)
         count++;
         Serial.print("Count Value: ");
         Serial.println(count);
-         //tránh đếm trùng tín hiệu
       }
       if(count > threshold_medium + 5)
       {
+        Serial.print("Vượt quá ngưỡng test: ");
+        Serial.println(count);
         break;
       }
-      delay(20);
+      vTaskDelay(100/portTICK_PERIOD_MS);
     }
     // thông điệm gửi đi theo ngưỡng tần suất
     if (count <= threshold_low) // count <= 5
     { 
       sendMessage(IN_SW_1801P, OUT_BUZZER, BUZZER_SW_DISABLE, Rung_Queue);
-      Serial.println("DISABLE WARNING lEVEL: ");
+      Serial.println("DISABLE WARNING lEVEL");
       Serial.println(count);
     }
 
@@ -59,16 +59,15 @@ void task_RUNG(void *pvParameters)
   }
 }  
 
-void sendMessage(int id_Tx, int id_Rx, int payload, QueueHandle_t queue)
+void sendMessage(ModuleID id_Tx, ModuleID id_Rx, ActionPayload payload, QueueHandle_t queue)
 {
-    Message sw_send = {0};
+    Message sw_send {INVALID_MODULEID, INVALID_MODULEID, INVALID_ACTIONPAYLOAD};
     sw_send.id_Tx = id_Tx;
     sw_send.id_Rx = id_Rx;
     sw_send.payload = payload;
-
-    if (xQueueSend(queue, &sw_send, portMAX_DELAY) == pdPASS)
+    if (xQueueOverwrite(queue, &sw_send) == pdPASS)
     {
-      Serial.print("Message sent: ");
+      Serial.print("task_rung.h sendMessage() Message sent: ");
       Serial.print("id_Tx: ");
       Serial.print(id_Tx);
       Serial.print(", id_Rx: ");

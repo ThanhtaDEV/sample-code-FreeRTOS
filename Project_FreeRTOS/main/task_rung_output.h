@@ -4,96 +4,93 @@
 
 #include "platform.h" 
 
-enum BuzzerStatus
+enum BuzzerMode
 {
-  BUZZER_DISABLE_STS,
-  BUZZER_LOW_STS,
-  BUZZER_HIGH_STS,
-  BUZZER_UNKNOWN_STS
+  BUZZER_MODE_DISABLE,
+  BUZZER_MODE_LOW,
+  BUZZER_MODE_HIGH
 };
 
-// Hàm điều khiển buzzer mức cảnh báo thấp
-void buzzerAlertLow()
+// Biến toàn cục lưu trạng thái hiện tại của buzzer
+volatile BuzzerMode currentBuzzerMode = BUZZER_MODE_DISABLE;
+
+void buzzerTask(void *pvParameters) 
 {
-  Serial.println("Buzzer: Low alert!");
-  for (int i = 0; i < 2; i++) // Rung 2 lần
+  for (;;) 
   {
-    analogWrite(buzzer_pin, 200); // Tín hiệu PWM (50% duty cycle)
-    delay(200);                  // Rung trong 200ms
-    analogWrite(buzzer_pin, 0);  // Tắt tín hiệu
-    delay(800);                  // Nghỉ 800ms
+    switch (currentBuzzerMode) 
+    {
+      case BUZZER_MODE_DISABLE:
+        analogWrite(buzzer_pin, 0); // Tắt buzzer
+        vTaskDelay(100 / portTICK_PERIOD_MS); // Nghỉ để tránh lặp không cần thiết
+        break;
+
+      case BUZZER_MODE_LOW:
+        analogWrite(buzzer_pin, 200); // PWM 50% duty cycle
+        vTaskDelay(100 / portTICK_PERIOD_MS); // Bật trong 100ms
+        analogWrite(buzzer_pin, 0); // Tắt
+        vTaskDelay(900 / portTICK_PERIOD_MS); // Nghỉ 900ms
+        break;
+
+      case BUZZER_MODE_HIGH:
+        analogWrite(buzzer_pin, 250); // PWM 100% duty cycle
+        vTaskDelay(100 / portTICK_PERIOD_MS); // Bật trong 100ms
+        analogWrite(buzzer_pin, 0); // Tắt
+        vTaskDelay(50 / portTICK_PERIOD_MS); // Nghỉ 50ms
+        break;
+
+      default:
+        // Nếu trạng thái không hợp lệ, tắt buzzer
+        analogWrite(buzzer_pin, 0);
+        break;
+    }
   }
 }
 
-// Hàm điều khiển buzzer mức cảnh báo cao
-void buzzerAlertHigh()
+void task_RUNG_output(void *pvParameters)
 {
-  Serial.println("Buzzer: High alert!");
-  for (int i = 0; i < 8; i++) // Rung 8 lần
+  for (;;)
   {
-    analogWrite(buzzer_pin, 200); // Tín hiệu PWM (100% duty cycle)
-    delay(200);                  // Rung trong 200ms
-    analogWrite(buzzer_pin, 0);  // Tắt tín hiệu
-    delay(100);                  // Nghỉ 100ms
-  }
-}
+    vTaskDelay(100 / portTICK_PERIOD_MS);
+    Message sw_receive {INVALID_MODULEID, INVALID_MODULEID, INVALID_ACTIONPAYLOAD};
 
-void task_RUNG_output()
-{ 
-  BuzzerStatus buzzer_sts = BUZZER_UNKNOWN_STS;
-  for(;;)
-  {
-    delay(100);
-    Message sw_receive = {0};
-    if(xQueueReceive(Rung_Queue, &sw_receive, portMAX_DELAY) == pdTRUE)
-    { 
-      if(sw_receive.id_Rx == OUT_BUZZER)
+    if (xQueueReceive(Rung_Queue, &sw_receive, portMAX_DELAY) == pdTRUE)
+    {
+      if (sw_receive.id_Rx == OUT_BUZZER && sw_receive.id_Tx == IN_SW_1801P)
       {
-        if(sw_receive.id_Tx == IN_SW_1801P)
+        switch (sw_receive.payload)
         {
-          switch(sw_receive.payload)
-          {
-            case BUZZER_SW_DISABLE:
-              if(buzzer_sts != BUZZER_DISABLE_STS)
-              {
-                Serial.println("Buzzer: Disabled");
-                analogWrite(buzzer_pin, 0); // Đảm bảo buzzer tắt
-                buzzer_sts = BUZZER_DISABLE_STS;
-              }
-              break;
+          case BUZZER_SW_DISABLE:
+            if (currentBuzzerMode != BUZZER_MODE_DISABLE)
+            {
+              Serial.println("Disabling Buzzer...");
+              currentBuzzerMode = BUZZER_MODE_DISABLE;
+            }
+            break;
 
-            case BUZZER_SW_ENABLE_LOW:
-              // if(buzzer_sts != BUZZER_LOW_STS)
-              // {
-                Serial.println("Buzzer: LOW");
-                buzzerAlertLow(); // Gọi hàm cảnh báo mức thấp
-                buzzer_sts = BUZZER_LOW_STS;
-              // }
-              break;
+          case BUZZER_SW_ENABLE_LOW:
+            if (currentBuzzerMode != BUZZER_MODE_LOW)
+            {
+              Serial.println("Enabling Buzzer Low...");
+              currentBuzzerMode = BUZZER_MODE_LOW;
+            }
+            break;
 
-            case BUZZER_SW_ENABLE_HIGH:
-              // if(buzzer_sts != BUZZER_HIGH_STS)
-              // {
-                Serial.println("Buzzer: HIGH");
-                buzzerAlertHigh(); // Gọi hàm cảnh báo mức cao
-                buzzer_sts = BUZZER_HIGH_STS;
-              // }
-              break;
+          case BUZZER_SW_ENABLE_HIGH:
+            if (currentBuzzerMode != BUZZER_MODE_HIGH)
+            {
+              Serial.println("Enabling Buzzer High...");
+              currentBuzzerMode = BUZZER_MODE_HIGH;
+            }
+            break;
 
-            default:
-              Serial.println("Unknown buzzer state");
-              analogWrite(buzzer_pin, 0); // Tắt buzzer khi trạng thái không xác định
-              buzzer_sts = BUZZER_UNKNOWN_STS;
-              break;
-          }
+          default:
+            Serial.println("Unknown Buzzer Command.");
+            break;
         }
       }
     }
-    else
-    {
-      // Thực hiện hành động khác nếu không có message trong hàng đợi
-    }
-  }   
+  }
 }
 
 #endif
