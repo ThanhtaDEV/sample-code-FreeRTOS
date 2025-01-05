@@ -14,12 +14,12 @@ enum PirStatus
 void LedAlertHigh()
 {
   Serial.println("Led: High alert!");
-  for (int i = 0; i < 10; i++) // Rung 8 lần
+  for (int i = 0; i < 4; i++) 
   {
-    digitalWrite(Led_pin, HIGH); // Tín hiệu PWM (100% duty cycle)
-    vTaskDelay(100 / portTICK_PERIOD_MS);                  // Rung trong 200ms
-    digitalWrite(Led_pin, LOW);  // Tắt tín hiệu
-    vTaskDelay(100 / portTICK_PERIOD_MS);                  // Nghỉ 100ms
+    analogWrite(Led_pin, 200); // Tín hiệu PWM (100% duty cycle)
+    delay(250);                  
+    //digitalWrite(Led_pin, 0);  // Tắt tín hiệu
+    //delay(100);                  // Nghỉ 100ms
   }
 }
 
@@ -28,7 +28,7 @@ void task_PERSON_output(void *pvParameters)
  PirStatus Led_sts = LED_PIR_UNKNOWN_STS;
   for(;;)
   {
-    vTaskDelay(200 / portTICK_PERIOD_MS);
+     vTaskDelay(20 / portTICK_PERIOD_MS);
     Message pir_receive {INVALID_MODULEID, INVALID_MODULEID, INVALID_ACTIONPAYLOAD};
     if(xQueueReceive(Person_Queue, &pir_receive, portMAX_DELAY) == pdTRUE)
     { 
@@ -42,7 +42,7 @@ void task_PERSON_output(void *pvParameters)
               if(Led_sts != LED_PIR_DISABLE_STS)
               {
                 Serial.println("Led: Disabled");
-                digitalWrite(Led_pin, LOW); // Đảm bảo led tắt
+                digitalWrite(Led_pin, 0); // Đảm bảo led tắt
                 Led_sts = LED_PIR_DISABLE_STS;
               }
               break;
@@ -55,7 +55,7 @@ void task_PERSON_output(void *pvParameters)
 
             default:
               Serial.println("Unknown Led state");
-              digitalWrite(Led_pin, LOW); // Tắt led khi trạng thái không xác định
+              digitalWrite(Led_pin, 0); // Tắt led khi trạng thái không xác định
              Led_sts = LED_PIR_UNKNOWN_STS;
               break;
           }

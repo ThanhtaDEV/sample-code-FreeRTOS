@@ -15,6 +15,7 @@ void task_RUNG(void *pvParameters)
   for(;;)
   {
     unsigned long start_time = millis(); //Thời điểm bắt đầu đo
+    bool signal_detect = false;
     while (millis() - start_time < time_interval )
     { 
       if(analogRead(IN_SW_1801P_pin) < 1000 )

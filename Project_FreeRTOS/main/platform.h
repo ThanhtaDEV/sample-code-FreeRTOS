@@ -10,6 +10,9 @@
 #define IN_PIR_pin 4
 #define Led_pin 17
 
+#define IN_MQ_135_pin 34
+#define Fan_pin 16
+
 enum ModuleID
 {
   INVALID_MODULEID = 0x00,
@@ -34,7 +37,7 @@ enum ActionPayload
 
   // //Fan output
   FAN_MQ_DISABLE,
-  FAN_MQ_ENABLE_LOW,
+  FAN_MQ_ENABLE_MEDIUM,
   FAN_MQ_ENABLE_HIGH,
   
   // //Led output
@@ -51,7 +54,7 @@ struct Message
 };
 
 extern QueueHandle_t Rung_Queue;  // Khai báo queue để sử dụng trong các file khác
-// extern QueueHandle_t Khoi_Queue;
+extern QueueHandle_t Khoi_Queue;
 extern QueueHandle_t Person_Queue;
 
 #endif  
